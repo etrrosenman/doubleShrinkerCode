@@ -5,6 +5,7 @@ library(plyr)
 library(dqrng)
 library(rootSolve)
 library(here)
+library(parallel)
 set.seed(2023)
 
 # load the helper functions 
@@ -12,8 +13,8 @@ setwd(here())
 source("Helper Functions.R")
 
 # load the synthetic data
-load('synthetic_crossjoint_data.os.Rdata')
-load('synthetic_crossjoint_data.rct.Rdata')
+load('synthetic_data.os.Rdata')
+load('synthetic_data.rct.Rdata')
 
 #################################################
 ####                constants                ####
