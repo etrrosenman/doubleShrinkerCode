@@ -95,7 +95,7 @@ subgroupDefs_noSplit <- function(subgroupVars, data.os, data.rct) {
       mean(data.rct[data.rct$subgroup == i & data.rct$Test == 0,][[outcome]])
   })
   names(subgroupTaus.gold) <- sort(unique(data.rct$subgroup))
-
+  
   # return the true causal effects
   return(list(data.os = data.os, 
               data.rct = data.rct,
@@ -190,11 +190,11 @@ shrinker <- function(gammaSq, etaSq, ed) {
 
 # eb method of moments functions
 eb.mm1 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
-
+  
   # kappa and gamma estimation
   etaSq.pre <- max(mean(ed$rctEst^2 - ed$rctVar), 0)
   gammaSq.pre <- max(mean((ed$rctEst - ed$obsEst)^2 - ed$rctVar - ed$obsVar), 0)
-
+  
   # kappa and gamma lower bounding (if requested)
   if(lowerBound) {
     etaSq <- max(etaSq.pre, 2*sum(ed$rctVar^2)/nrow(ed)/sum(ed$rctVar))
@@ -204,7 +204,7 @@ eb.mm1 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
+  
   # return the shrinker
   if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
@@ -303,8 +303,8 @@ eb.ure <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
   
   # solve for the optimizing parameters 
   hyperParams.constrOptim <- tryCatch({constrOptim(c(1e-6, 1e-6), URE, grad = UREgrad, 
-                     ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
-                     error = function(e) {c(0, 0)})
+                                                   ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
+                                      error = function(e) {c(0, 0)})
   hyperParams.optim <- optim(c(0, 0), URE, lower = c(0, 0), method = 'L-BFGS-B', 
                              ed = ed)$par
   
@@ -326,7 +326,7 @@ eb.ure <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
+  
   # return the value
   if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
@@ -370,37 +370,7 @@ URE <- function(hyperparams, ed) {
   
 }
 
-UREgrad <- function(hyperparams, ed) {
-  
-  # unpack the hyperparameters
-  gammaSq <- hyperparams[1]
-  etaSq <- hyperparams[2]
-  
-  # unpack the parameters
-  var.r <- ed$rctVar
-  var.o <- ed$obsVar
-  
-  # bias grad
-  biasGrad <- c(sum(-((2*etaSq*ed$rctVar^2* ((etaSq + ed$rctVar) *ed$obsEst - 
-                  etaSq*ed$rctEst)*(etaSq*ed$obsEst - (etaSq + gammaSq + 
-                  ed$obsVar)* ed$rctEst))/((gammaSq + ed$obsVar)*ed$rctVar + 
-                  etaSq*(gammaSq + ed$obsVar + ed$rctVar))^3)), 
-                sum(-((2*(gammaSq + ed$obsVar)*ed$rctVar^2* (ed$rctVar*ed$obsEst + 
-                  (gammaSq + ed$obsVar)*ed$rctEst)*(-etaSq* ed$obsEst + (etaSq + gammaSq + 
-                  ed$obsVar)*ed$rctEst))/((gammaSq + ed$obsVar)*ed$rctVar + 
-                  etaSq*(gammaSq + ed$obsVar + ed$rctVar))^3)))
-  
-  # var grad
-  varGrad <- c(sum((2*etaSq^2*ed$rctVar^2)/((gammaSq + ed$obsVar)*ed$rctVar + 
-                etaSq*(gammaSq + ed$obsVar + ed$rctVar))^2), 
-               sum((2*(gammaSq + ed$obsVar)^2*ed$rctVar^2)/((gammaSq + ed$obsVar)*
-                ed$rctVar + etaSq*(gammaSq + ed$obsVar + ed$rctVar))^2))
-  
-  biasGrad + varGrad
-  
-  
-}
-  
+
 # eb likelihood function 
 ebLik <- function(hyperParams, ed) {
   
@@ -410,9 +380,9 @@ ebLik <- function(hyperParams, ed) {
   
   # return the likelihood
   lik <- sum(log(etaSq + ed$rctVar) +
-    ed$rctEst^2/(etaSq + ed$rctVar)
-  + log(gammaSq + etaSq + ed$obsVar + 1e-12) +  # fudge factor to avoid errors
-    ed$obsEst^2/(gammaSq + etaSq + ed$obsVar + 1e-12)) # fudge factor to avoid errors
+               ed$rctEst^2/(etaSq + ed$rctVar)
+             + log(gammaSq + etaSq + ed$obsVar + 1e-12) +  # fudge factor to avoid errors
+               ed$obsEst^2/(gammaSq + etaSq + ed$obsVar + 1e-12)) # fudge factor to avoid errors
   
   return(lik)
 }
@@ -425,11 +395,11 @@ ebLikGrad <- function(hyperParams, ed) {
   
   # return the gradient
   -c(sum(ed$obsEst^2/(gammaSq + etaSq + ed$obsVar)^2 - 
-          1/(gammaSq + etaSq + ed$obsVar)), 
-    sum(ed$rctEst^2/(etaSq + ed$rctVar)^2 - 
-               1/(etaSq + ed$rctVar) +
-             ed$obsEst^2/(gammaSq + etaSq + ed$obsVar)^2 - 
-               1/(gammaSq + etaSq + ed$obsVar)))
+           1/(gammaSq + etaSq + ed$obsVar)), 
+     sum(ed$rctEst^2/(etaSq + ed$rctVar)^2 - 
+           1/(etaSq + ed$rctVar) +
+           ed$obsEst^2/(gammaSq + etaSq + ed$obsVar)^2 - 
+           1/(gammaSq + etaSq + ed$obsVar)))
 }
 
 
@@ -441,7 +411,7 @@ ebCiFunc <- function(ebData, ed, alpha = 0.05) {
   
   sapply(ebData$c, FUN = function(x) {cva(x, alpha = alpha)$cv})*
     ebData$a*sqrt(ebData$lambda^2*ed$rctVar + 
-                           (1 - ebData$lambda)^2*ed$obsVar)
+                    (1 - ebData$lambda)^2*ed$obsVar)
 }
 
 coverage <- function(ptEst, interval, trueVals) {
