@@ -4,60 +4,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an R research codebase implementing "double shrinker" empirical Bayes estimators that combine RCT (Randomized Controlled Trial) and observational study data for subgroup causal effect estimation. The work evaluates these estimators against competitors via simulation studies using real data as the population.
+`doubleShrinker` is an R package implementing "double shrinker" empirical Bayes estimators that combine RCT (Randomized Controlled Trial) and observational study data for subgroup causal effect estimation. The package also provides competitor estimators and tools for empirical Bayes confidence intervals. Simulation scripts for evaluating the estimators live in `scripts/`.
 
-## Running the Code
-
-Run the simulation scripts from the project root (the `.Rproj` file establishes the working directory via `here()`):
+## Package Development
 
 ```r
-# In R or RStudio
-source("MSE_Sims.R")   # MSE comparison simulation
-source("CI_Sims.R")    # Confidence interval coverage simulation
+# Document (regenerate NAMESPACE and man/ from roxygen2 comments)
+devtools::document()
+
+# Install locally
+devtools::install()
+
+# Run tests
+devtools::test()
 ```
 
-Or from the command line:
-```bash
-Rscript MSE_Sims.R
-Rscript CI_Sims.R
+**Important:** `kappa.1` and `kappa.2` use `@rawNamespace export(kappa.1)` / `@rawNamespace export(kappa.2)` instead of `@export` to prevent roxygen2 from treating them as S3 methods of the base `kappa` generic.
+
+## Running Simulations
+
+Simulation scripts are in `scripts/` and use `library(doubleShrinker)` — install the package first.
+
+```r
+# From the project root
+Rscript scripts/MSE_Sims.R    # MSE comparison simulation
+Rscript scripts/CI_Sims.R     # Confidence interval coverage simulation
 ```
 
-Required R packages: `mvtnorm`, `plyr`, `dqrng`, `rootSolve`, `here`, `parallel`, `ebci`, `tibble`
+Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `parallel`
 
-## Architecture
+## Package Structure
 
-### File Structure
-- **`Helper Functions.R`** — All core functions; sourced by both simulation scripts
-- **`MSE_Sims.R`** — Bootstrap simulation comparing estimators by MSE, bias, and variance
-- **`CI_Sims.R`** — Bootstrap simulation evaluating confidence interval coverage and length
-- **`synthetic_data.os.RData`** / **`synthetic_data.rct.RData`** — Synthetic population datasets (observational study and RCT)
+### `R/` source files
+- **`estimators.R`** — Core double shrinker: `shrinker()` and the four `eb.*` hyperparameter estimators
+- **`competitors.R`** — Competitor estimators: `precistion.wtd()`, `kappa.1()`, `kappa.2()`, `delta.1()`, `delta.2()`
+- **`data_helpers.R`** — Data preparation: `subgroupDefs_noSplit()`, `getParamEstimates()`, `stratifiedBootstrapSample()`
+- **`ci.R`** — Confidence intervals: `ebCiFunc()`, `coverage()`
+- **`utils.R`** — Internal helpers (not exported): `URE`, `UREgrad`, `ebLik`, `ebLikGrad`
+
+### `data/`
+- **`synthetic_data.os.RData`** / **`synthetic_data.rct.RData`** — Synthetic population datasets
 - **`data.os.RData`** / **`data.rct.RData`** — Real datasets
 
-### Data Flow
+### `scripts/`
+- **`MSE_Sims.R`** — Bootstrap simulation comparing estimators by MSE, bias, and variance
+- **`CI_Sims.R`** — Bootstrap simulation evaluating CI coverage and length
 
-Both simulation scripts follow the same pattern:
-1. Load synthetic data as a population
-2. Loop over subgroup variable combinations (7 total, from 1-variable to 3-variable crosses)
-3. For each subgroup configuration, run `numSamples=1000` stratified bootstrap iterations in parallel (`mclapply`)
-4. Each iteration: resample from population → estimate parameters → apply all estimators → record results
-
-### Key Functions in `Helper Functions.R`
+## Key Functions
 
 **Data preparation:**
-- `subgroupDefs_noSplit()` — Tags units with subgroup labels across both datasets; computes "true" treatment effects from RCT data
-- `getParamEstimates()` — Estimates per-stratum RCT and observational treatment effects and variances (supports IPW propensity score adjustment for the OS)
-- `stratifiedBootstrapSample()` — Fast stratified bootstrap using pre-stored IDs and `dqsample`
+- `subgroupDefs_noSplit(subgroupVars, data.os, data.rct, outcome)` — Tags units with subgroup labels; computes "true" per-stratum treatment effects from RCT data
+- `getParamEstimates(rctSample, obsSample, outcome, propScoreAdjust)` — Estimates per-stratum RCT and OS treatment effects and variances; supports IPW propensity score adjustment
+- `stratifiedBootstrapSample(sampleIds, delta)` — Fast stratified bootstrap using pre-stored IDs and `dqsample`
 
 **Core double shrinker:**
-- `shrinker(gammaSq, etaSq, ed)` — The fundamental estimator. `gammaSq` is the variance of the bias (RCT - obs discrepancy), `etaSq` is the signal variance (true treatment effect variance). Combines RCT and OS estimates via weights `lambda` and `a`.
+- `shrinker(gammaSq, etaSq, ed)` — The fundamental estimator. `gammaSq` is bias variance (RCT - OS discrepancy), `etaSq` is signal variance. Combines RCT and OS estimates via weights `lambda` and `a`.
 
-**Hyperparameter estimation methods (all call `shrinker` internally):**
-- `eb.mm1()` — Method of moments estimator 1 (uses cross terms of rctEst and obsEst)
-- `eb.mm2()` — Method of moments estimator 2 (alternative moment conditions)
-- `eb.mle()` — Maximum likelihood via `constrOptim` + `L-BFGS-B` with `ebLik`/`ebLikGrad`
-- `eb.ure()` — Unbiased risk estimation via minimizing `URE`/`UREgrad`
+**Hyperparameter estimators (all call `shrinker` internally):**
+- `eb.mm1()` — Method of moments 1 (moment conditions on RCT estimates)
+- `eb.mm2()` — Method of moments 2 (alternative moment conditions)
+- `eb.mle()` — Maximum likelihood via `constrOptim` + `L-BFGS-B`
+- `eb.ure()` — Unbiased risk estimation
 
-All four accept `lowerBound=TRUE` to prevent near-zero hyperparameter estimates, and `returnCIComps=TRUE` to return components needed for CI construction.
+All four accept `lowerBound=TRUE` and `returnCIComps=TRUE` (returns list with `shrinker`, `lambda`, `a`, `c`, `etaSqLwr`, `gammaSqLwr`).
 
 **Competitor estimators:**
 - `precistion.wtd()` — Precision-weighted combination
@@ -65,9 +74,12 @@ All four accept `lowerBound=TRUE` to prevent near-zero hyperparameter estimates,
 - `delta.1()`, `delta.2()` — Green et al. (2005) James-Stein-style shrinkage
 
 **Confidence intervals:**
-- `ebCiFunc()` — Constructs empirical Bayes CI half-widths using the `cva()` function from the `ebci` package
+- `ebCiFunc(ebData, ed, alpha)` — EB CI half-widths using `cva()` from the `ebci` package
 - `coverage()` — Checks whether true values fall within constructed intervals
 
-### Outcome Variable
+## Data Conventions
 
-The outcome is `"Outcome.CHD"` (coronary heart disease). Subgrouping variables are `"CVD"`, `"AGER"`, and `"LANGLEYSCAT"`. The `Test` column indicates treatment assignment (1 = treated, 0 = control).
+- Outcome variable: `"Outcome.CHD"` (coronary heart disease, binary)
+- Subgrouping variables: `"CVD"`, `"AGER"`, `"LANGLEYSCAT"`
+- Treatment indicator: `Test` (1 = treated, 0 = control)
+- The `ed` data frame passed to estimators has columns: `rctEst`, `rctVar`, `obsEst`, `obsVar`, `stratum`

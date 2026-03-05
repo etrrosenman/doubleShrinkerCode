@@ -4,16 +4,26 @@
 \alias{getParamEstimates}
 \title{Estimate per-stratum causal effects from RCT and observational data}
 \usage{
-getParamEstimates(rctSample, obsSample, outcome, propScoreAdjust = TRUE)
+getParamEstimates(
+  rctSample,
+  obsSample,
+  outcome,
+  treatment = "Test",
+  propScoreAdjust = TRUE
+)
 }
 \arguments{
-\item{rctSample}{Data frame of RCT data. Must have columns \code{subgroup}, \code{Test},
-and the outcome column named by \code{outcome}.}
+\item{rctSample}{Data frame of RCT data. Must have columns \code{subgroup}, the
+treatment column named by \code{treatment}, and the outcome column named by \code{outcome}.}
 
 \item{obsSample}{Data frame of observational data. Must have columns \code{subgroup},
-\code{Test}, \code{propScore}, and the outcome column named by \code{outcome}.}
+the treatment column named by \code{treatment}, \code{propScore}, and the outcome column
+named by \code{outcome}.}
 
 \item{outcome}{Character string. Name of the binary outcome column.}
+
+\item{treatment}{Character string. Name of the binary treatment column (1 = treated,
+0 = control). Default \code{"Test"}.}
 
 \item{propScoreAdjust}{Logical. If \code{TRUE} (default), uses inverse probability
 weighting for the observational estimate.}

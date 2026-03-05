@@ -1,0 +1,198 @@
+---
+title: "Estimating Subgroup Treatment Effects with the Double Shrinker"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Estimating Subgroup Treatment Effects with the Double Shrinker}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+library( tidyverse )
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Background
+
+Say we have two data sources on the effect of a treatment on coronary heart disease (`Outcome.CHD`):
+
+- An **RCT** with clean identification but limited sample size.
+- An **observational study (OS)** with many more units but potential confounding bias.
+
+The double shrinker combines both sources to produce stratum-specific treatment effect estimates that are more precise than the RCT alone, while protecting against bias by shrinking toward the RCT when the two sources disagree.
+
+This vignette walks through how to conduct such an analysis using the `doubleShrinker` package, using some fake data generated to mimic the actual (privacy-protected) data used in the paper associated with this work.
+
+```{r load}
+library(doubleShrinker)
+
+
+load( here::here( "data/data.rct.RData" ) )
+head( data.rct )
+nrow( data.rct )
+
+
+load( here::here( "data/data.os.RData" ) )
+head( data.os )
+nrow( data.os )
+
+```
+
+Note we are assuming we have a propensity score from some prior work we have done on the observational study.
+The nice thing about this approach is we do not need to worry about where it came from.
+If our observational study is well-specified, then the double shrinker will learn to trust it more; if it is misspecified, the double shrinker will learn to trust it less.
+
+
+## Step 1: Define subgroups
+
+We subgroup by two variables — `CVD` (pre-existing cardiovascular disease) crossed with `AGER` (age category) — giving us several strata to analyze jointly.
+
+```{r subgroups}
+subgroupVars <- c("CVD", "AGER")
+outcome      <- "Outcome.CHD"
+
+allData <- subgroupDefs_noSplit(
+  subgroupVars = subgroupVars,
+  data.os      = data.os,
+  data.rct     = data.rct,
+  outcome      = outcome,
+  treatment    = "Test"
+)
+
+rctData <- allData$data.rct
+obsData <- allData$data.os
+k       <- length(allData$subgroupTaus.true)
+
+cat("Number of strata:", k, "\n")
+cat("Strata:\n")
+print(allData$subgroupTaus.true)
+```
+
+The `subgroupTaus.true` vector gives treatment effect estimates for each stratum, computed from the full RCT population.
+
+## Step 2: Estimate per-stratum effects
+
+`getParamEstimates()` computes stratum-level treatment effect estimates and sampling variances from both data sources. The OS estimate uses inverse probability weighting (IPW) to adjust for confounding.
+
+```{r estimates}
+ed <- getParamEstimates(rctData, obsData, outcome, treatment = "Test")
+print(ed)
+```
+Each row is a stratum. `rctEst`/`rctVar` are the RCT difference-in-means estimate and its variance; `obsEst`/`obsVar` are the IPW-adjusted OS estimate and its variance.
+One could build this table by hand, using whatever methods for analysis one would like.
+
+Notice that the OS variances are generally smaller (more data), but the RCT and OS estimates sometimes disagree — that disagreement, across strata, is what the double shrinker quantifies as `gammaSq` (bias variance).
+
+We can look at a scatterplot of our estimates to see if there is agreement:
+
+```{r, include=FALSE}
+ed2 <- ed %>%
+  mutate(
+    a = 1.96 * sqrt(rctVar),   # horizontal radius
+    b = 1.96 * sqrt(obsVar), # vertical radius
+    id = row_number()
+
+  )
+
+ggplot(ed2, aes(rctEst, obsEst, color=as.factor(id))) +
+    ggforce::geom_ellipse(
+    aes(x0 = rctEst, y0 = obsEst, a = a, b = b, angle = 0,
+        fill = as.factor(id) ),
+    color = NA,
+    alpha = 0.25
+  ) +
+  geom_point(size = 2) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  coord_fixed() +
+  theme_minimal() +
+  theme( legend.position = "none" )
+```
+There is little agreement, save for the two highly precise estimates, suggesting lots of noise or lots of bias, or both.
+
+
+## Step 3: Apply the double shrinker estimators
+
+We apply all four hyperparameter estimation methods. We use `lowerBound = TRUE` to prevent near-zero hyperparameter estimates, which is recommended when the number of strata is small.
+
+```{r double-shrinker}
+est_mm1 <- eb.mm1(ed, k, lowerBound = TRUE)
+est_mm2 <- eb.mm2(ed, k, lowerBound = TRUE)
+est_mle <- eb.mle(ed, k, lowerBound = TRUE)
+est_ure <- eb.ure(ed, k, lowerBound = TRUE)
+
+# Make a tibble of results
+ests <- tibble(
+  strata = ed$stratum,
+  rct_only   = ed$rctEst,
+  obs_only   = ed$obsEst,
+  mm1 = est_mm1,
+  mm2 = est_mm2,
+  mle = est_mle,
+  ure = est_ure
+)
+```
+
+## Step 4: Apply competitor estimators
+
+For comparison, we also apply the precision-weighted combination and the Rosenman et al. (2023) kappa estimators.
+
+```{r competitors}
+
+ests <- ests %>%
+  mutate( est_prec = precistion.wtd(ed, k),
+          kappa1 = kappa.1(ed, k),
+          kappa2 = kappa.2(ed, k),
+          delta1 = delta.1(ed, k),
+          delta2 = delta.2(ed, k)
+  )
+```
+
+We finally print out our results:
+
+```{r}
+knitr::kable( ests, digits=3 )
+```
+
+
+A few things to notice:
+
+- The **RCT-only** estimates are unbiased but noisy; they vary quite a bit across strata relative to the true effects.
+- The **OS-only** estimates are more stable but may be systematically off due to confounding.
+- The **double shrinker** variants (prefixed `ds_`) generally sit between the two, pulled toward the OS when its estimates are consistent with the RCT, and toward the RCT when they disagree.
+- The **precision-weighted** estimator also blends both sources, but does not account for OS bias — it will over-weight the OS whenever `obsVar` is small, regardless of disagreement.
+
+## Step 6: Empirical Bayes confidence intervals
+
+The `eb.mm1` estimator can return the components needed to construct valid confidence intervals that account for the shrinkage.
+
+```{r ci}
+eb_comps <- eb.mm1(ed, k, lowerBound = TRUE, returnCIComps = TRUE)
+
+half_widths <- ebCiFunc(eb_comps, ed, alpha = 0.05)
+
+ci <- data.frame(
+  stratum  = ed$stratum,
+  true_tau = allData$subgroupTaus.true,
+  estimate = eb_comps$shrinker,
+  lower    = eb_comps$shrinker - half_widths,
+  upper    = eb_comps$shrinker + half_widths
+)
+
+ci %>%
+  knitr::kable( digits = 3 )
+
+```
+
+These are empirical Bayes intervals — they use a critical value adjusted for the shrinkage bias, so they have better coverage properties than naive normal intervals around the shrunken point estimate.
+
+## Summary
+
+In this analysis the double shrinker combines a small RCT and a larger observational study to produce more precise stratum-level treatment effect estimates. The four hyperparameter estimation strategies (MM1, MM2, MLE, URE) all target the same model and tend to give similar estimates.
+The `lowerBound = TRUE` option is advisable with small numbers of strata to prevent degenerately small hyperparameter estimates.
+
+

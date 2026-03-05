@@ -4,7 +4,13 @@
 \alias{subgroupDefs_noSplit}
 \title{Define subgroups and compute true treatment effects}
 \usage{
-subgroupDefs_noSplit(subgroupVars, data.os, data.rct, outcome)
+subgroupDefs_noSplit(
+  subgroupVars,
+  data.os,
+  data.rct,
+  outcome,
+  treatment = "Test"
+)
 }
 \arguments{
 \item{subgroupVars}{Character vector of column names to use for subgrouping.
@@ -16,6 +22,9 @@ If multiple names are provided, subgroups are formed by crossing all variables.}
 
 \item{outcome}{Character string. Name of the binary outcome column used to
 compute true treatment effects.}
+
+\item{treatment}{Character string. Name of the binary treatment column
+(1 = treated, 0 = control). Default \code{"Test"}.}
 }
 \value{
 A list with elements:

@@ -82,5 +82,5 @@ delta.2 <- function(ed, k) {
                      diag(1/ed$rctVar), 0)
   
   estimator <- ed$obsEst + lambda.2 %*% (ed$rctEst - ed$obsEst)
-  return(estimator)
+  return( as.numeric( estimator) )
 }
