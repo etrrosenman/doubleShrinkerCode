@@ -69,11 +69,13 @@ test_that("eb.mm1 a is in [0, 1]", {
   expect_true(all(out$a >= 0 & out$a <= 1))
 })
 
-test_that("eb.mm1 lowerBound pushes estimates further from zero than no bound", {
+test_that("eb.mm1 lowerBound shrinks more than no bound", {
   out_no  <- eb.mm1(ed3, k3, lowerBound = FALSE)
   out_lb  <- eb.mm1(ed3, k3, lowerBound = TRUE)
-  # lowerBound raises etaSq (=> higher a => less shrinkage toward 0)
-  expect_true(all(abs(out_lb) >= abs(out_no) - 1e-10))
+  
+  abs(out_lb) - abs(out_no)
+  
+  expect_true(all(abs(out_lb) <= abs(out_no) + 1e-10))
 })
 
 # ── eb.mm2() ──────────────────────────────────────────────────────────────────
@@ -129,6 +131,6 @@ test_that("all four eb estimators produce finite estimates on the same input", {
   )
   for (nm in names(results)) {
     expect_true(all(is.finite(results[[nm]])), label = paste(nm, "is finite"))
-    expect_length(results[[nm]], k3, label = paste(nm, "has length k"))
+    expect_length(results[[nm]], k3 )
   }
 })

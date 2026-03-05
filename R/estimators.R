@@ -12,20 +12,22 @@
 #'
 #' @return Numeric vector of double-shrunken treatment effect estimates, one per stratum.
 #' @export
-shrinker <- function(gammaSq, etaSq, ed) {
 
+shrinker <- function(gammaSq, etaSq, ed) {
+  
+  # unpack the parameters
   x <- ed$rctEst
   y <- ed$obsEst
   var.r <- ed$rctVar
   var.o <- ed$obsVar
-
-  lambda <- (gammaSq + var.o) / (gammaSq + var.o + var.r)
-  a <- etaSq * (gammaSq + var.r + var.o) /
-    (var.r * (gammaSq + var.o) + etaSq * (gammaSq + var.r + var.o))
-
-  return(a * (lambda * x + (1 - lambda) * y))
+  
+  # determine the weights
+  lambda <- (gammaSq + var.o)/(gammaSq + var.o + var.r)
+  a <- etaSq*(gammaSq + var.r + var.o)/(var.r*(gammaSq + var.o) + etaSq*(gammaSq + var.r + var.o))
+  
+  # return the shrinker
+  return(a*(lambda*x + (1 - lambda)*y))
 }
-
 
 #' Double shrinker: method of moments estimator 1 (eb.mm1)
 #'
@@ -45,28 +47,31 @@ shrinker <- function(gammaSq, etaSq, ed) {
 #'   `etaSqLwr`, and `gammaSqLwr`.
 #' @export
 eb.mm1 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
-
+  
+  # kappa and gamma estimation
   etaSq.pre <- max(mean(ed$rctEst^2 - ed$rctVar), 0)
   gammaSq.pre <- max(mean((ed$rctEst - ed$obsEst)^2 - ed$rctVar - ed$obsVar), 0)
-
-  if (lowerBound) {
-    etaSq <- max(etaSq.pre, 2 * sum(ed$rctVar^2) / nrow(ed) / sum(ed$rctVar))
-    gammaSq <- max(gammaSq.pre, 2 * sum((ed$obsVar + ed$rctVar)^2) /
-                     nrow(ed) / sum(ed$obsVar + ed$rctVar))
+  
+  # kappa and gamma lower bounding (if requested)
+  if(lowerBound) {
+    etaSq <- max(etaSq.pre, 2*sum(ed$rctVar^2)/nrow(ed)/sum(ed$rctVar))
+    gammaSq <- max(gammaSq.pre, 2*sum((ed$obsVar + ed$rctVar)^2)/
+                     nrow(ed)/sum(ed$obsVar + ed$rctVar))
   } else {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
-  if (!returnCIComps)
+  
+  # return the shrinker
+  if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
   else {
     return(list(shrinker = shrinker(gammaSq, etaSq, ed),
-                lambda = (gammaSq + ed$obsVar) / (gammaSq + ed$obsVar + ed$rctVar),
-                a = etaSq * (gammaSq + ed$obsVar + ed$rctVar) /
-                  (ed$rctVar * (gammaSq + ed$obsVar) + etaSq * (gammaSq + ed$obsVar + ed$rctVar)),
-                c = ed$rctVar * (gammaSq * (etaSq + 2 * ed$obsVar) + gammaSq^2 + ed$obsVar^2) /
-                  (etaSq * ((gammaSq + ed$obsVar)^2 + ed$obsVar * ed$rctVar)),
+                lambda = (gammaSq + ed$obsVar)/(gammaSq + ed$obsVar + ed$rctVar),
+                a = etaSq*(gammaSq + ed$obsVar + ed$rctVar)/
+                  (ed$rctVar*(gammaSq + ed$obsVar) + etaSq*(gammaSq + ed$obsVar + ed$rctVar)),
+                c = ed$rctVar*(gammaSq*(etaSq + 2*ed$obsVar) + gammaSq^2 + ed$obsVar^2)/
+                  (etaSq*((gammaSq + ed$obsVar)^2 + ed$obsVar*ed$rctVar)),
                 etaSqLwr = etaSq == etaSq.pre,
                 gammaSqLwr = gammaSq == gammaSq.pre))
   }
@@ -82,33 +87,35 @@ eb.mm1 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
 #' @inherit eb.mm1 return
 #' @export
 eb.mm2 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
-
+  
+  # kappa and gamma estimation
   etaSq.pre <- max(mean(ed$rctEst^2 - ed$rctVar), 0)
   gammaSq.pre <- max(mean(-(ed$rctEst^2) + (ed$obsEst)^2 + ed$rctVar - ed$obsVar), 0)
-
-  if (lowerBound) {
-    etaSq <- max(etaSq.pre, 2 * sum(ed$rctVar^2) / nrow(ed) / sum(ed$rctVar))
-    gammaSq <- max(gammaSq.pre, 2 * sum((ed$obsVar + ed$rctVar)^2) /
-                     nrow(ed) / sum(ed$obsVar + ed$rctVar))
+  
+  # kappa and gamma lower bounding (if requested)
+  if(lowerBound) {
+    etaSq <- max(etaSq.pre, 2*sum(ed$rctVar^2)/nrow(ed)/sum(ed$rctVar))
+    gammaSq <- max(gammaSq.pre, 2*sum((ed$obsVar + ed$rctVar)^2)/
+                     nrow(ed)/sum(ed$obsVar + ed$rctVar))
   } else {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
-  if (!returnCIComps)
+  
+  # return the shrinker
+  if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
   else {
     return(list(shrinker = shrinker(gammaSq, etaSq, ed),
-                lambda = (gammaSq + ed$obsVar) / (gammaSq + ed$obsVar + ed$rctVar),
-                a = etaSq * (gammaSq + ed$obsVar + ed$rctVar) /
-                  (ed$rctVar * (gammaSq + ed$obsVar) + etaSq * (gammaSq + ed$obsVar + ed$rctVar)),
-                c = ed$rctVar * (gammaSq * (etaSq + 2 * ed$obsVar) + gammaSq^2 + ed$obsVar^2) /
-                  (etaSq * ((gammaSq + ed$obsVar)^2 + ed$obsVar * ed$rctVar)),
+                lambda = (gammaSq + ed$obsVar)/(gammaSq + ed$obsVar + ed$rctVar),
+                a = etaSq*(gammaSq + ed$obsVar + ed$rctVar)/
+                  (ed$rctVar*(gammaSq + ed$obsVar) + etaSq*(gammaSq + ed$obsVar + ed$rctVar)),
+                c = ed$rctVar*(gammaSq*(etaSq + 2*ed$obsVar) + gammaSq^2 + ed$obsVar^2)/
+                  (etaSq*((gammaSq + ed$obsVar)^2 + ed$obsVar*ed$rctVar)),
                 etaSqLwr = etaSq == etaSq.pre,
                 gammaSqLwr = gammaSq == gammaSq.pre))
   }
 }
-
 
 #' Double shrinker: maximum likelihood estimator (eb.mle)
 #'
@@ -120,48 +127,50 @@ eb.mm2 <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
 #' @importFrom stats constrOptim optim
 #' @export
 eb.mle <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
-
-  hyperParams.constrOptim <- tryCatch(
-    {constrOptim(c(1e-12, 1e-12), ebLik, grad = ebLikGrad,
-                 ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
-    error = function(e) {c(0, 0)})
+  
+  # solve for the optimizing parameters 
+  hyperParams.constrOptim <- tryCatch({constrOptim(c(1e-12, 1e-12), ebLik, grad = ebLikGrad, 
+                                                   ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
+                                      error = function(e) {c(0, 0)})
   hyperParams.constrOptim <- pmax(hyperParams.constrOptim, 0)
-
-  hyperParams.optim <- optim(c(0, 0), ebLik, gr = ebLikGrad, lower = c(0, 0),
+  
+  hyperParams.optim <- optim(c(0, 0), ebLik, gr = ebLikGrad, lower = c(0, 0), 
                              method = 'L-BFGS-B', ed = ed)$par
   hyperParams.optim <- pmax(hyperParams.optim, 0)
-
-  if (ebLik(hyperParams.constrOptim, ed) < ebLik(hyperParams.optim, ed)) {
+  
+  # choose hyperparameters based on whichever yields lower function value
+  if(ebLik(hyperParams.constrOptim, ed) < ebLik(hyperParams.optim, ed)) {
     gammaSq.pre <- hyperParams.constrOptim[1]
     etaSq.pre <- hyperParams.constrOptim[2]
   } else {
     gammaSq.pre <- hyperParams.optim[1]
     etaSq.pre <- hyperParams.optim[2]
   }
-
-  if (lowerBound) {
-    etaSq <- max(etaSq.pre, 2 * sum(ed$rctVar^2) / nrow(ed) / sum(ed$rctVar))
-    gammaSq <- max(gammaSq.pre, 2 * sum((ed$obsVar + ed$rctVar)^2) /
-                     nrow(ed) / sum(ed$obsVar + ed$rctVar))
+  
+  # kappa and gamma lower bounding (if requested)
+  if(lowerBound) {
+    etaSq <- max(etaSq.pre, 2*sum(ed$rctVar^2)/nrow(ed)/sum(ed$rctVar))
+    gammaSq <- max(gammaSq.pre, 2*sum((ed$obsVar + ed$rctVar)^2)/
+                     nrow(ed)/sum(ed$obsVar + ed$rctVar))
   } else {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
-  if (!returnCIComps)
+  
+  # return the shrinker
+  if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
   else {
     return(list(shrinker = shrinker(gammaSq, etaSq, ed),
-                lambda = (gammaSq + ed$obsVar) / (gammaSq + ed$obsVar + ed$rctVar),
-                a = etaSq * (gammaSq + ed$obsVar + ed$rctVar) /
-                  (ed$rctVar * (gammaSq + ed$obsVar) + etaSq * (gammaSq + ed$obsVar + ed$rctVar)),
-                c = ed$rctVar * (gammaSq * (etaSq + 2 * ed$obsVar) + gammaSq^2 + ed$obsVar^2) /
-                  (etaSq * ((gammaSq + ed$obsVar)^2 + ed$obsVar * ed$rctVar)),
+                lambda = (gammaSq + ed$obsVar)/(gammaSq + ed$obsVar + ed$rctVar),
+                a = etaSq*(gammaSq + ed$obsVar + ed$rctVar)/
+                  (ed$rctVar*(gammaSq + ed$obsVar) + etaSq*(gammaSq + ed$obsVar + ed$rctVar)),
+                c = ed$rctVar*(gammaSq*(etaSq + 2*ed$obsVar) + gammaSq^2 + ed$obsVar^2)/
+                  (etaSq*((gammaSq + ed$obsVar)^2 + ed$obsVar*ed$rctVar)),
                 etaSqLwr = etaSq == etaSq.pre,
                 gammaSqLwr = gammaSq == gammaSq.pre))
   }
 }
-
 
 #' Double shrinker: unbiased risk estimation (eb.ure)
 #'
@@ -173,41 +182,47 @@ eb.mle <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
 #' @importFrom stats constrOptim optim
 #' @export
 eb.ure <- function(ed, k, lowerBound = FALSE, returnCIComps = FALSE) {
-
-  hyperParams.constrOptim <- tryCatch(
-    {constrOptim(c(1e-6, 1e-6), URE, grad = UREgrad,
-                 ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
-    error = function(e) {c(0, 0)})
-  hyperParams.optim <- optim(c(0, 0), URE, lower = c(0, 0), method = 'L-BFGS-B',
+  
+  # solve for the optimizing parameters 
+  hyperParams.constrOptim <- tryCatch({constrOptim(c(1e-6, 1e-6), URE, grad = UREgrad, 
+                                                   ui = diag(1, 2), ci = c(0, 0), ed = ed)$par},
+                                      error = function(e) {c(0, 0)})
+  hyperParams.optim <- optim(c(0, 0), URE, lower = c(0, 0), method = 'L-BFGS-B', 
                              ed = ed)$par
-
-  if (URE(hyperParams.constrOptim, ed) < URE(hyperParams.optim, ed)) {
+  
+  # choose hyperparameters based on whichever yields lower function value
+  if(URE(hyperParams.constrOptim, ed) < URE(hyperParams.optim, ed)) {
     gammaSq.pre <- hyperParams.constrOptim[1]
     etaSq.pre <- hyperParams.constrOptim[2]
   } else {
     gammaSq.pre <- hyperParams.optim[1]
     etaSq.pre <- hyperParams.optim[2]
   }
-
-  if (lowerBound) {
-    etaSq <- max(etaSq.pre, 2 * sum(ed$rctVar^2) / nrow(ed) / sum(ed$rctVar))
-    gammaSq <- max(gammaSq.pre, 2 * sum((ed$obsVar + ed$rctVar)^2) /
-                     nrow(ed) / sum(ed$obsVar + ed$rctVar))
+  
+  # kappa and gamma lower bounding (if requested)
+  if(lowerBound) {
+    etaSq <- max(etaSq.pre, 2*sum(ed$rctVar^2)/nrow(ed)/sum(ed$rctVar))
+    gammaSq <- max(gammaSq.pre, 2*sum((ed$obsVar + ed$rctVar)^2)/
+                     nrow(ed)/sum(ed$obsVar + ed$rctVar))
   } else {
     etaSq <- etaSq.pre
     gammaSq <- gammaSq.pre
   }
-
-  if (!returnCIComps)
+  
+  # return the value
+  if(!returnCIComps)
     shrinker(gammaSq, etaSq, ed)
   else {
     return(list(shrinker = shrinker(gammaSq, etaSq, ed),
-                lambda = (gammaSq + ed$obsVar) / (gammaSq + ed$obsVar + ed$rctVar),
-                a = etaSq * (gammaSq + ed$obsVar + ed$rctVar) /
-                  (ed$rctVar * (gammaSq + ed$obsVar) + etaSq * (gammaSq + ed$obsVar + ed$rctVar)),
-                c = ed$rctVar * (gammaSq * (etaSq + 2 * ed$obsVar) + gammaSq^2 + ed$obsVar^2) /
-                  (etaSq * ((gammaSq + ed$obsVar)^2 + ed$obsVar * ed$rctVar)),
+                lambda = (gammaSq + ed$obsVar)/(gammaSq + ed$obsVar + ed$rctVar),
+                a = etaSq*(gammaSq + ed$obsVar + ed$rctVar)/
+                  (ed$rctVar*(gammaSq + ed$obsVar) + etaSq*(gammaSq + ed$obsVar + ed$rctVar)),
+                c = ed$rctVar*(gammaSq*(etaSq + 2*ed$obsVar) + gammaSq^2 + ed$obsVar^2)/
+                  (etaSq*((gammaSq + ed$obsVar)^2 + ed$obsVar*ed$rctVar)),
                 etaSqLwr = etaSq == etaSq.pre,
                 gammaSqLwr = gammaSq == gammaSq.pre))
   }
 }
+
+
+

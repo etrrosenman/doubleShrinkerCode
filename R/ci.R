@@ -13,9 +13,10 @@
 #' @importFrom stats qnorm
 #' @export
 ebCiFunc <- function(ebData, ed, alpha = 0.05) {
-  sapply(ebData$c, FUN = function(x) {cva(x, alpha = alpha)$cv}) *
-    ebData$a * sqrt(ebData$lambda^2 * ed$rctVar +
-                      (1 - ebData$lambda)^2 * ed$obsVar)
+  
+  sapply(ebData$c, FUN = function(x) {cva(x, alpha = alpha)$cv})*
+    ebData$a*sqrt(ebData$lambda^2*ed$rctVar + 
+                    (1 - ebData$lambda)^2*ed$obsVar)
 }
 
 
