@@ -17,6 +17,6 @@
 Numeric vector of kappa-2 estimates, one per stratum.
 }
 \description{
-Diagonal shrinkage toward the observational estimate using stratum-specific
-shrinkage factors.
+Diagonal shrinkage toward the observational estimate using
+stratum-specific shrinkage factors.
 }

@@ -15,6 +15,6 @@
 Numeric vector of kappa-1 estimates, one per stratum.
 }
 \description{
-Scalar shrinkage toward the observational estimate using a single pooled
-shrinkage factor.
+Scalar shrinkage toward the observational estimate using a single
+pooled shrinkage factor.
 }

@@ -142,6 +142,7 @@ subgroupDefs_noSplit <- function(subgroupVars, data.os, data.rct, outcome ) {
 #'
 #' @return Integer vector of sampled row indices.
 #' @importFrom dqrng dqsample
+#' @export
 stratifiedBootstrapSample <- function(sampleIds, delta) {
   
   ids <- unlist(l <- lapply(1:length(sampleIds), FUN = function(k) {

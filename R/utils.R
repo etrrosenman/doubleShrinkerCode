@@ -1,11 +1,3 @@
-############################################
-##              MSE function              ##
-############################################
-
-# function to compute loss
-loss <- function(tauTrue, tauHat) {
-  mean((tauTrue - tauHat)^2)
-}
 
 
 

@@ -17,12 +17,13 @@ precistion.wtd <- function(ed, k, trueVar = NULL) {
 
 #' Kappa-1 estimator (Rosenman et al. 2023)
 #'
-#' Scalar shrinkage toward the observational estimate using a single pooled
-#' shrinkage factor.
+#' Scalar shrinkage toward the observational estimate using a single
+#' pooled shrinkage factor.
 #'
 #' @inheritParams precistion.wtd
 #' @return Numeric vector of kappa-1 estimates, one per stratum.
-#' @export
+#' @name kappa.1
+#' @rawNamespace export(kappa.1)
 kappa.1 <- function(ed, k) {
   
   lambda.1 <- min(sum(ed$rctVar)/sum((ed$rctEst - ed$obsEst)^2), 1)
@@ -31,14 +32,17 @@ kappa.1 <- function(ed, k) {
   return(estimator)
 }
 
+
+
 #' Kappa-2 estimator (Rosenman et al. 2023)
 #'
-#' Diagonal shrinkage toward the observational estimate using stratum-specific
-#' shrinkage factors.
+#' Diagonal shrinkage toward the observational estimate using
+#' stratum-specific shrinkage factors.
 #'
 #' @inheritParams precistion.wtd
 #' @return Numeric vector of kappa-2 estimates, one per stratum.
-#' @export
+#' @name kappa.2
+#' @rawNamespace export(kappa.2)
 kappa.2 <- function(ed, k, trueVar = NULL) {
   
   lambda.2 <- pmin(pmax(sum(ed$rctVar)^2/

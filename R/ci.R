@@ -20,18 +20,3 @@ ebCiFunc <- function(ebData, ed, alpha = 0.05) {
 }
 
 
-#' Confidence interval coverage check
-#'
-#' Tests whether true values fall within symmetric confidence intervals centered
-#' at point estimates.
-#'
-#' @param ptEst Numeric vector of point estimates.
-#' @param interval Numeric vector of half-widths.
-#' @param trueVals Numeric vector of true parameter values.
-#'
-#' @return Logical vector; `TRUE` where the interval covers the true value.
-#' @export
-coverage <- function(ptEst, interval, trueVals) {
-  ptEst - interval < trueVals &
-    trueVals < ptEst + interval
-}

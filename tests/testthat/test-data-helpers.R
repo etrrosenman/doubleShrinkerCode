@@ -115,23 +115,3 @@ test_that("subgroupDefs_noSplit returns named subgroupTaus.true", {
   expect_false(is.null(names(out$subgroupTaus.true)))
   expect_equal(length(out$subgroupTaus.true), nlevels(out$data.rct$subgroup))
 })
-
-# ── coverage() ────────────────────────────────────────────────────────────────
-
-test_that("coverage returns TRUE when true value is inside interval", {
-  expect_true(coverage(ptEst = 0.1, interval = 0.05, trueVals = 0.12))
-  expect_true(coverage(ptEst = 0.1, interval = 0.05, trueVals = 0.06))
-})
-
-test_that("coverage returns FALSE when true value is outside interval", {
-  expect_false(coverage(ptEst = 0.1, interval = 0.05, trueVals = 0.20))
-  expect_false(coverage(ptEst = 0.1, interval = 0.05, trueVals = 0.00))
-})
-
-test_that("coverage works vectorised", {
-  ptEst    <- c(0.05, 0.10)
-  interval <- c(0.02, 0.02)
-  trueVals <- c(0.06, 0.20)   # first covered, second not
-  out <- coverage(ptEst, interval, trueVals)
-  expect_equal(out, c(TRUE, FALSE))
-})
