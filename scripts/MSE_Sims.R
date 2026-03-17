@@ -23,8 +23,8 @@ load('data/data.rct.Rdata')
 
 # control variables
 outcome <- "Outcome.CHD"
-numRctUnits <- 1000
-numSamples <- 1000
+numRctUnits <- 8000
+numSamples <- 5000
 
 # subgroups
 subgroupVarLists <- list("CVD", "AGER", "LANGLEYSCAT", c("AGER", "CVD"),
@@ -132,3 +132,5 @@ mseTable <- tibble(
                                                            FUN = function(x) {x/rawMse$rctEst}))
 )
 print(mseTable)
+
+write_csv(mseTable, file = '~/Desktop/mseTable_8000.csv')
