@@ -132,5 +132,3 @@ mseTable <- tibble(
                                                            FUN = function(x) {x/rawMse$rctEst}))
 )
 print(mseTable)
-
-write_csv(mseTable, file = '~/Desktop/mseTable_8000.csv')

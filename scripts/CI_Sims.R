@@ -24,7 +24,7 @@ load('data/data.rct.Rdata')
 # control variables
 outcome <- "Outcome.CHD"
 numRctUnits <- 1000
-numSamples <- 20
+numSamples <- 5000
 alpha <- 0.05 
 
 # subgroups
