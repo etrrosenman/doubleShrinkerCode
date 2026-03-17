@@ -1,35 +1,21 @@
-
-
 rm(list = ls())
 
-library(mvtnorm)
-library(plyr)
-library(dqrng)
-library(rootSolve)
-library(ebci)
-set.seed(2023)
-
 # load the helper functions 
-setwd(here::here())
-
+library(tidyverse)
+library(here)
 library(doubleShrinker)
 
+# set folder and preliminaries
+set.seed(2026)
+setwd(here::here())
+source("scripts/Helper_Functions.R")
+
 # load the synthetic data
-load('data/synthetic_data.os.Rdata')
-load('data/synthetic_data.rct.Rdata')
+load('data/data.os.Rdata')
+load('data/data.rct.Rdata')
 
-
-
-#################################################
-####                utility functions                ####
-#################################################
-
-coverage <- function(ptEst, interval, trueVals) {
-  ptEst - interval < trueVals &
-    trueVals < ptEst + interval
-}
-
-
+#load('data/synthetic_data.os.Rdata')
+#load('data/synthetic_data.rct.Rdata')
 
 #################################################
 ####                constants                ####
@@ -38,7 +24,7 @@ coverage <- function(ptEst, interval, trueVals) {
 # control variables
 outcome <- "Outcome.CHD"
 numRctUnits <- 1000
-numSamples <- 1000
+numSamples <- 20
 alpha <- 0.05 
 
 # subgroups
