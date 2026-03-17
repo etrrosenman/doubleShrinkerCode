@@ -1,0 +1,25 @@
+Package: doubleShrinker
+Title: Double Shrinkage Empirical Bayes Estimators for Combining RCT and Observational Data
+Version: 0.1.0
+Authors@R:
+    person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
+Description: Implements double shrinkage empirical Bayes estimators that combine
+    randomized controlled trial (RCT) and observational study data for multi-stratum
+    subgroup causal effect estimation. Provides method of moments, MLE, and unbiased
+    risk estimation approaches for hyperparameter estimation, along with competitor
+    estimators and empirical Bayes confidence intervals.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    dqrng,
+    ebci,
+    plyr,
+    stats
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3

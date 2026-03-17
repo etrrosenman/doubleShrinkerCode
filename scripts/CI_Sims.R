@@ -1,3 +1,5 @@
+
+
 rm(list = ls())
 
 library(mvtnorm)
@@ -8,12 +10,26 @@ library(ebci)
 set.seed(2023)
 
 # load the helper functions 
-setwd(here())
-source("Helper Functions.R")
+setwd(here::here())
+
+library(doubleShrinker)
 
 # load the synthetic data
-load('synthetic_data.os.Rdata')
-load('synthetic_data.rct.Rdata')
+load('data/synthetic_data.os.Rdata')
+load('data/synthetic_data.rct.Rdata')
+
+
+
+#################################################
+####                utility functions                ####
+#################################################
+
+coverage <- function(ptEst, interval, trueVals) {
+  ptEst - interval < trueVals &
+    trueVals < ptEst + interval
+}
+
+
 
 #################################################
 ####                constants                ####
@@ -43,7 +59,7 @@ results <- lapply(subgroupVarLists, FUN = function(subgroupVars) {
   
   # obtain the strata indicators for each unit in the obs & rct data 
   print(subgroupVars)
-  allData <- subgroupDefs_noSplit(subgroupVars, data.os, data.rct) 
+  allData <- subgroupDefs_noSplit(subgroupVars, data.os, data.rct, outcome=outcome) 
   obsData <- allData$data.os
   rctData <- allData$data.rct
   k <- length(allData$subgroupTaus.true)
