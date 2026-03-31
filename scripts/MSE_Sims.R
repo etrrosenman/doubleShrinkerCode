@@ -1,31 +1,21 @@
 rm(list = ls())
 
-library(mvtnorm)
-library(plyr)
-library(dqrng)
-library(rootSolve)
-library(here)
-library(parallel)
-set.seed(2023)
-
 # load the helper functions 
+library(tidyverse)
+library(here)
+library(doubleShrinker)
+
+# set folder and preliminaries
+set.seed(2026)
 setwd(here::here())
-library( doubleShrinker )
+source("scripts/Helper_Functions.R")
 
 # load the synthetic data
-load('data/synthetic_data.os.Rdata')
-load('data/synthetic_data.rct.Rdata')
+load('data/data.os.Rdata')
+load('data/data.rct.Rdata')
 
-
-#################################################
-####                helper functions                ####
-#################################################
-
-# function to compute loss
-loss <- function(tauTrue, tauHat) {
-  mean((tauTrue - tauHat)^2)
-}
-
+#load('data/synthetic_data.os.Rdata')
+#load('data/synthetic_data.rct.Rdata')
 
 #################################################
 ####                constants                ####
@@ -33,8 +23,8 @@ loss <- function(tauTrue, tauHat) {
 
 # control variables
 outcome <- "Outcome.CHD"
-numRctUnits <- 1000
-numSamples <- 1000
+numRctUnits <- 8000
+numSamples <- 5000
 
 # subgroups
 subgroupVarLists <- list("CVD", "AGER", "LANGLEYSCAT", c("AGER", "CVD"),
