@@ -1,29 +1,21 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-`doubleShrinker` is an R package implementing "double shrinker" empirical Bayes estimators that combine RCT (Randomized Controlled Trial) and observational study data for subgroup causal effect estimation. The package also provides competitor estimators and tools for empirical Bayes confidence intervals. Simulation scripts for evaluating the estimators live in `scripts/`.
+`doubleShrinker` is an R package accompanying "Empirical Bayes Double Shrinkage for Combining
+Biased and Unbiased Causal Estimates" by Rosenman, Dominici, and Miratrix. 
 
-## Package Development
+The package implements Empirical Bayes double shrinkers for combining biased and unbiased estimates of the same quantity. The package also provides competitor estimators and tools for computing Empirical Bayes  confidence intervals. Simulation scripts from the manuscript, comparing the double shrinkers' performance against competitors, live in `scripts/`.
 
+
+## Installation
+  
 ```r
-# Document (regenerate NAMESPACE and man/ from roxygen2 comments)
-devtools::document()
-
-# Install locally
-devtools::install()
-
-# Run tests
-devtools::test()
+# install.packages("remotes")
+remotes::install_github("etrrosenman/doubleShrinkerCode")
 ```
-
-**Important:** `kappa.1` and `kappa.2` use `@rawNamespace export(kappa.1)` / `@rawNamespace export(kappa.2)` instead of `@export` to prevent roxygen2 from treating them as S3 methods of the base `kappa` generic.
 
 ## Running Simulations
 
-Simulation scripts are in `scripts/` and use `library(doubleShrinker)` — install the package first.
+Simulation scripts are in `scripts/`. Use `library(doubleShrinker)` after first installing the package. 
 
 ```r
 # From the project root
@@ -43,8 +35,8 @@ Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `para
 - **`utils.R`** — Internal helpers (not exported): `URE`, `UREgrad`, `ebLik`, `ebLikGrad`
 
 ### `data/`
-- **`synthetic_data.os.RData`** / **`synthetic_data.rct.RData`** — Synthetic population datasets
-- **`data.os.RData`** / **`data.rct.RData`** — Real datasets
+- **`synthetic_data.os.RData`** — Synthetic observational dataset
+- **`synthetic_data.rct.RData`** — Synthetic experimental dataset
 
 ### `scripts/`
 - **`MSE_Sims.R`** — Bootstrap simulation comparing estimators by MSE, bias, and variance
@@ -53,12 +45,8 @@ Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `para
 ## Key Functions
 
 **Data preparation:**
-- `subgroupDefs_noSplit(subgroupVars, data.os, data.rct, outcome)` — Tags units with subgroup labels; computes "true" per-stratum treatment effects from RCT data
 - `getParamEstimates(rctSample, obsSample, outcome, propScoreAdjust)` — Estimates per-stratum RCT and OS treatment effects and variances; supports IPW propensity score adjustment
 - `stratifiedBootstrapSample(sampleIds, delta)` — Fast stratified bootstrap using pre-stored IDs and `dqsample`
-
-**Core double shrinker:**
-- `shrinker(gammaSq, etaSq, ed)` — The fundamental estimator. `gammaSq` is bias variance (RCT - OS discrepancy), `etaSq` is signal variance. Combines RCT and OS estimates via weights `lambda` and `a`.
 
 **Hyperparameter estimators (all call `shrinker` internally):**
 - `eb.mm1()` — Method of moments 1 (moment conditions on RCT estimates)
@@ -83,3 +71,4 @@ All four accept `lowerBound=TRUE` and `returnCIComps=TRUE` (returns list with `s
 - Subgrouping variables: `"CVD"`, `"AGER"`, `"LANGLEYSCAT"`
 - Treatment indicator: `Test` (1 = treated, 0 = control)
 - The `ed` data frame passed to estimators has columns: `rctEst`, `rctVar`, `obsEst`, `obsVar`, `stratum`
+
