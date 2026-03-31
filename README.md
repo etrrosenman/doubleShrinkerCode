@@ -3,10 +3,7 @@
 `doubleShrinker` is an R package accompanying "Empirical Bayes Double Shrinkage for Combining
 Biased and Unbiased Causal Estimates" by Rosenman, Dominici, and Miratrix. 
 
-The package implements Empirical Bayes double shrinkers for combining biased and unbiased estimates 
-of the same quantity. The package also provides competitor estimators and tools for computing Empirical Bayes 
-confidence intervals. Simulation scripts from the manuscript Rosenman,
-evaluating the estimators live in `scripts/`.
+The package implements Empirical Bayes double shrinkers for combining biased and unbiased estimates of the same quantity. The package also provides competitor estimators and tools for computing Empirical Bayes  confidence intervals. Simulation scripts from the manuscript, comparing the double shrinkers' performance against competitors, live in `scripts/`.
 
 ## Package Development
 
