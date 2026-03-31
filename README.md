@@ -5,24 +5,17 @@ Biased and Unbiased Causal Estimates" by Rosenman, Dominici, and Miratrix.
 
 The package implements Empirical Bayes double shrinkers for combining biased and unbiased estimates of the same quantity. The package also provides competitor estimators and tools for computing Empirical Bayes  confidence intervals. Simulation scripts from the manuscript, comparing the double shrinkers' performance against competitors, live in `scripts/`.
 
-## Package Development
 
+## Installation
+  
 ```r
-# Document (regenerate NAMESPACE and man/ from roxygen2 comments)
-devtools::document()
-
-# Install locally
-devtools::install()
-
-# Run tests
-devtools::test()
+# install.packages("remotes")
+remotes::install_github("etrrosenman/doubleShrinkerCode")
 ```
-
-**Important:** `kappa.1` and `kappa.2` use `@rawNamespace export(kappa.1)` / `@rawNamespace export(kappa.2)` instead of `@export` to prevent roxygen2 from treating them as S3 methods of the base `kappa` generic.
 
 ## Running Simulations
 
-Simulation scripts are in `scripts/` and use `library(doubleShrinker)` — install the package first.
+Simulation scripts are in `scripts/`. Use `library(doubleShrinker)` after first installing the package. 
 
 ```r
 # From the project root
@@ -43,7 +36,6 @@ Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `para
 
 ### `data/`
 - **`synthetic_data.os.RData`** / **`synthetic_data.rct.RData`** — Synthetic population datasets
-- **`data.os.RData`** / **`data.rct.RData`** — Real datasets
 
 ### `scripts/`
 - **`MSE_Sims.R`** — Bootstrap simulation comparing estimators by MSE, bias, and variance
@@ -83,9 +75,3 @@ All four accept `lowerBound=TRUE` and `returnCIComps=TRUE` (returns list with `s
 - Treatment indicator: `Test` (1 = treated, 0 = control)
 - The `ed` data frame passed to estimators has columns: `rctEst`, `rctVar`, `obsEst`, `obsVar`, `stratum`
 
-## Installation
-  
-```r
-# install.packages("remotes")
-remotes::install_github("etrrosenman/doubleShrinkerCode")
-```
