@@ -4,3 +4,5 @@
 .DS_Store
 /doc/
 /Meta/
+!data/data.os.RData
+!data/data.rct.RData
