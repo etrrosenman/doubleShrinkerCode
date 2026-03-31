@@ -35,7 +35,8 @@ Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `para
 - **`utils.R`** — Internal helpers (not exported): `URE`, `UREgrad`, `ebLik`, `ebLikGrad`
 
 ### `data/`
-- **`synthetic_data.os.RData`** / **`synthetic_data.rct.RData`** — Synthetic population datasets
+- **`synthetic_data.os.RData`** — Synthetic observational dataset
+- **`synthetic_data.rct.RData`** — Synthetic experimental dataset
 
 ### `scripts/`
 - **`MSE_Sims.R`** — Bootstrap simulation comparing estimators by MSE, bias, and variance
@@ -44,12 +45,8 @@ Additional packages needed by the scripts: `mvtnorm`, `rootSolve`, `here`, `para
 ## Key Functions
 
 **Data preparation:**
-- `subgroupDefs_noSplit(subgroupVars, data.os, data.rct, outcome)` — Tags units with subgroup labels; computes "true" per-stratum treatment effects from RCT data
 - `getParamEstimates(rctSample, obsSample, outcome, propScoreAdjust)` — Estimates per-stratum RCT and OS treatment effects and variances; supports IPW propensity score adjustment
 - `stratifiedBootstrapSample(sampleIds, delta)` — Fast stratified bootstrap using pre-stored IDs and `dqsample`
-
-**Core double shrinker:**
-- `shrinker(gammaSq, etaSq, ed)` — The fundamental estimator. `gammaSq` is bias variance (RCT - OS discrepancy), `etaSq` is signal variance. Combines RCT and OS estimates via weights `lambda` and `a`.
 
 **Hyperparameter estimators (all call `shrinker` internally):**
 - `eb.mm1()` — Method of moments 1 (moment conditions on RCT estimates)
